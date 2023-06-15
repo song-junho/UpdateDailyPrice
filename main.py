@@ -5,6 +5,7 @@ import exchange_calendars as ecals
 import pandas as pd
 from datetime import datetime
 from update_daily import UpdateDaily
+from collections import deque
 
 
 if __name__ == "__main__":
@@ -29,19 +30,27 @@ if __name__ == "__main__":
     if is_update_all == -1:
         # 전체 일자 업데이트
         dict_df_stock_daily = {}
+
+        # 전체 일자 임시 저장 deque 생성
+        dict_daily_deque = {}
+
         for v_date in tqdm(XKRX.schedule.index):
             if v_date > datetime.today():
                 break
             dict_df_stock_daily[v_date] = pd.DataFrame()
+            dict_daily_deque[v_date] = deque([])
 
         date_start = min(dict_df_stock_daily.keys())
     else:
+        # 전체 일자 임시 저장 deque 생성
+        dict_daily_deque = {}
+
         # 최신 업데이트 일자 이후 업데이트
         date_start = min(dict_df_stock_daily.keys())
 
-
-    update_price = UpdateDaily(dict_df_stock_daily, dict_df_stock, date_start)
+    update_price = UpdateDaily(dict_df_stock_daily, dict_df_stock, date_start, dict_daily_deque)
     update_price.multiprocessing(df_krx_info)
+    update_price.set_dict_df_stock_daily()
 
     dict_df_stock_daily = update_price.dict_df_stock_daily
 
