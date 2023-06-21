@@ -1,10 +1,6 @@
 import pandas as pd
 from tqdm import tqdm
-import threading
-
-import logging
-from concurrent.futures import ThreadPoolExecutor
-import time
+from concurrent.futures import ThreadPoolExecutor, wait
 import threading
 
 
@@ -30,7 +26,6 @@ class UpdateDaily:
 
                 with self._lock:
                     self.dict_daily_deque[v_date].append(rows.to_frame().T)
-                    # self.dict_df_stock_daily[v_date] = pd.concat([self.dict_df_stock_daily[v_date], rows.to_frame().T])
 
     def multiprocessing(self, df_krx_info):
 
@@ -40,11 +35,11 @@ class UpdateDaily:
 
         with ThreadPoolExecutor(max_workers=5) as executor:
 
-            for list_cmp_cd in list_cmp_cd_t:
-                executor.submit(self.update_dict_stock_daily, list_cmp_cd)
+            threads = [executor.submit(self.update_dict_stock_daily, list_cmp_cd) for list_cmp_cd in list_cmp_cd_t]
+            wait(threads)
 
     def set_dict_df_stock_daily(self):
 
-        for p_date in tqdm(self.dict_df_stock_daily.keys()):
+        for p_date in tqdm(self.dict_daily_deque.keys()):
             self.dict_df_stock_daily[p_date] = pd.concat(self.dict_daily_deque[p_date])
 

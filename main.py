@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     XKRX = ecals.get_calendar("XKRX")
 
-    is_update_all = -1
+    is_update_all = 1
     if is_update_all == -1:
         # 전체 일자 업데이트
         dict_df_stock_daily = {}
@@ -40,13 +40,33 @@ if __name__ == "__main__":
             dict_df_stock_daily[v_date] = pd.DataFrame()
             dict_daily_deque[v_date] = deque([])
 
-        date_start = min(dict_df_stock_daily.keys())
+        date_start = min(dict_daily_deque.keys())
     else:
+
+        # 이전 데이터 load
+        with open(r"D:\MyProject\StockPrice\DictDfStockDaily.pickle", 'rb') as fr:
+            dict_df_stock_daily = pickle.load(fr)
+
         # 전체 일자 임시 저장 deque 생성
         dict_daily_deque = {}
 
         # 최신 업데이트 일자 이후 업데이트
-        date_start = min(dict_df_stock_daily.keys())
+        date_start = max(dict_df_stock_daily.keys())
+
+        # 전체 일자 임시 저장 deque 생성
+        for v_date in tqdm(XKRX.schedule.index):
+
+            date_diff = (v_date - datetime.today())
+            if date_diff.days > -2:
+                break
+            elif v_date > max(dict_df_stock_daily.keys()):
+                dict_df_stock_daily[v_date] = pd.DataFrame()
+                dict_daily_deque[v_date] = deque([])
+            else:
+                continue
+
+        # 최신 업데이트 일자 이후 업데이트
+        date_start = min(dict_daily_deque.keys())
 
     update_price = UpdateDaily(dict_df_stock_daily, dict_df_stock, date_start, dict_daily_deque)
     update_price.multiprocessing(df_krx_info)
